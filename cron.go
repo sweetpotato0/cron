@@ -39,6 +39,9 @@ type Logger interface {
 
 // Entry consists of a schedule and the func to execute on that schedule.
 type Entry struct {
+	// The id of Entry.
+	ID int
+
 	// The schedule on which this job should be run.
 	Schedule Schedule
 
@@ -97,23 +100,30 @@ type FuncJob func()
 func (f FuncJob) Run() { f() }
 
 // AddFunc adds a func to the Cron to be run on the given schedule.
-func (c *Cron) AddFunc(spec string, cmd func()) error {
-	return c.AddJob(spec, FuncJob(cmd))
+func (c *Cron) AddFunc(spec string, cmd func(), id int) error {
+	return c.AddJob(spec, FuncJob(cmd), id)
 }
 
 // AddJob adds a Job to the Cron to be run on the given schedule.
-func (c *Cron) AddJob(spec string, cmd Job) error {
+func (c *Cron) AddJob(spec string, cmd Job, id int) error {
 	schedule, err := Parse(spec)
 	if err != nil {
 		return err
 	}
-	c.Schedule(schedule, cmd)
+	c.Schedule(schedule, cmd, id)
 	return nil
 }
 
+// RemoveJob remove a Job from the Cron.
+// func (c *Cron) RemoveJob(id int) error {
+// 	if !c.running {
+// 	}
+// }
+
 // Schedule adds a Job to the Cron to be run on the given schedule.
-func (c *Cron) Schedule(schedule Schedule, cmd Job) {
+func (c *Cron) Schedule(schedule Schedule, cmd Job, id int) {
 	entry := &Entry{
+		ID:       id,
 		Schedule: schedule,
 		Job:      cmd,
 	}
@@ -249,6 +259,7 @@ func (c *Cron) entrySnapshot() []*Entry {
 	entries := []*Entry{}
 	for _, e := range c.entries {
 		entries = append(entries, &Entry{
+			ID:       e.ID,
 			Schedule: e.Schedule,
 			Next:     e.Next,
 			Prev:     e.Prev,

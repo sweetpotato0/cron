@@ -1,6 +1,7 @@
 package cron
 
 import (
+	"errors"
 	"log"
 	"runtime"
 	"sort"
@@ -114,11 +115,29 @@ func (c *Cron) AddJob(spec string, cmd Job, id int) error {
 	return nil
 }
 
+// position get get postision where entry's id is id.
+func (c *Cron) position(id int) (int, error) {
+	for p, e := range c.entries {
+		if e.ID == id {
+			return p, nil
+		}
+	}
+	return 0, errors.New("Not Found")
+}
+
 // RemoveJob remove a Job from the Cron.
-// func (c *Cron) RemoveJob(id int) error {
-// 	if !c.running {
-// 	}
-// }
+func (c *Cron) RemoveJob(id int) error {
+	if !c.running {
+
+		p, err := c.position(id)
+		if err != nil {
+			return nil
+		}
+		c.entries = append(c.entries[:p], c.entries[p+1:]...)
+	}
+
+	return nil
+}
 
 // Schedule adds a Job to the Cron to be run on the given schedule.
 func (c *Cron) Schedule(schedule Schedule, cmd Job, id int) {
